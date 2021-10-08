@@ -12,7 +12,7 @@ def transform2(a: Matrix, i, j):
     a.a[i], a.a[j] = a.a[j], a.a[i]
 
 
-def trasnsform3(a: Matrix, i, x):
+def transform3(a: Matrix, i, x):
     for j in range(a.m):
         a.a[i][j] *= x
 
@@ -68,6 +68,7 @@ def gauss(a: Matrix, b: list):
                 if c.get(i, j) != 0:
                     for row in range(0, i):
                         transform1(c, row, i, -Fraction(c.get(row, j), c.get(i, j)))
+                    transform3(c, i, Fraction(1, c.get(i, j)))
                     break
 
         print(c)
