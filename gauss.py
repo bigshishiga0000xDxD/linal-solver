@@ -1,5 +1,6 @@
 from matrix import *
 
+
 def transform1(a: Matrix, i, j, x):
     if i == j:
         raise Exception
@@ -13,29 +14,54 @@ def transform2(a: Matrix, i, j):
 
 
 def transform3(a: Matrix, i, x):
+    if x == 0:
+        raise Exception
+
     for j in range(a.m):
         a.a[i][j] *= x
 
 
-def gauss(a: Matrix, b: list):
-    if a.n != len(b):
-        raise Exception
+def appendMatrix(a: Matrix, b: Matrix):
+    c = Matrix(a.n, a.m + b.m)
 
-    n = a.n
-    m = a.m
-
-    c = Matrix(n, m + 1)
-
-    for i in range(n):
-        for j in range(m):
+    for i in range(a.n):
+        for j in range(a.m):
             c.set(i, j, a.get(i, j))
 
-    for i in range(n):
-        c.set(i, m, b[i])
+    for i in range(b.n):
+        for j in range(b.m):
+            c.set(i, a.m + j, b.get(i, j))
 
+    if b.m != 0:
+        c.setLine(a.m - 1)
+    return c
+
+
+def splitMatrix(c: Matrix):
+    if c.line is None:
+        raise Exception
+
+    a = Matrix(c.n, c.line + 1)
+    b = Matrix(c.n, c.m - a.m)
+
+    for i in range(a.n):
+        for j in range(a.m):
+            a.set(i, j, c.get(i, j))
+
+    for i in range(b.n):
+        for j in range(b.m):
+            b.set(i, j, c.get(i, a.m + j))
+
+    return a, b
+
+
+def runGauss(c: Matrix, n: int, m: int):
     row = 0
     for j in range(m):
-        if a.get(row, j) == 0:
+        if row == n:
+            break
+
+        if c.get(row, j) == 0:
             for i in range(row + 1, n):
                 if c.get(i, j) != 0:
                     transform2(c, i, row)
@@ -56,19 +82,48 @@ def gauss(a: Matrix, b: list):
                 flag = False
                 break
 
-        if flag and c.get(i, m) != 0:
-            no_solution = True
-            break
-
-    if no_solution:
-        print("No solution")
-    else:
-        for i in range(n):
-            for j in range(m):
+        if flag:
+            for j in range(m, c.m):
                 if c.get(i, j) != 0:
-                    for row in range(0, i):
-                        transform1(c, row, i, -Fraction(c.get(row, j), c.get(i, j)))
-                    transform3(c, i, Fraction(1, c.get(i, j)))
+                    no_solution = True
                     break
 
+            if no_solution:
+                break
+
+    for i in range(n):
+        for j in range(m):
+            if c.get(i, j) != 0:
+                for row in range(0, i):
+                    transform1(c, row, i, -Fraction(c.get(row, j), c.get(i, j)))
+                transform3(c, i, Fraction(1, c.get(i, j)))
+                break
+
+    return c, no_solution
+
+
+def gauss(a: Matrix, b=None, force_print=False):
+    if b is None:
+        b = Matrix(a.n, 0)
+    elif a.n != b.n:
+        raise Exception
+
+    c, no_solution = runGauss(appendMatrix(a, b), a.n, a.m)
+
+    if no_solution and not force_print:
+        print("No solution")
+    else:
         print(c)
+
+
+def inv(a: Matrix):
+    if a.n != a.m:
+        raise Exception
+
+    c, no_solution = runGauss(appendMatrix(a, E(a.n)), a.n, a.m)
+
+    if no_solution:
+        return None
+    else:
+        a, b = splitMatrix(c)
+        return b

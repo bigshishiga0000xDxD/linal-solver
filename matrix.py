@@ -3,6 +3,7 @@ from fractions import Fraction
 
 class Matrix:
     def __init__(self, *args):
+        self.line = None
         if len(args) == 1:
             self.n = len(args[0])
             self.m = len(args[0][0])
@@ -20,20 +21,35 @@ class Matrix:
 
     def __repr__(self):
         result = ""
+        max_len = [0] * self.m
+
+        for j in range(self.m):
+            for i in range(self.n):
+                max_len[j] = max(max_len[j], len(str(self.get(i, j))))
 
         for i in range(self.n):
             for j in range(self.m):
-                result += str(self.a[i][j])
+                s = str(self.get(i, j))
+                result += s
+                result += ' ' * (max_len[j] - len(s))
+
+                if j == self.line:
+                    result += '|'
                 result += ' '
             result += '\n'
 
-        return result[:-1]
+        return result
 
     def get(self, i, j):
         return self.a[i][j]
 
     def set(self, i, j, x):
         self.a[i][j] = Fraction(x)
+
+    def setLine(self, i):
+        if i < 0 or i > self.m - 2:
+            raise Exception
+        self.line = i
 
     def __neg__(self):
         result = Matrix(self.n, self.m)
@@ -94,6 +110,7 @@ def T(a: Matrix):
 
     return result
 
+
 def tr(a: Matrix):
     if a.n != a.m:
         raise Exception
@@ -103,3 +120,12 @@ def tr(a: Matrix):
         result += a.a[i][i]
 
     return result
+
+
+def E(n: int):
+    res = Matrix(n, n)
+
+    for i in range(n):
+        res.set(i, i, 1)
+
+    return res
