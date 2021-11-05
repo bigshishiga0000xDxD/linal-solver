@@ -1,27 +1,7 @@
 from matrix import *
+import transformer
 
-
-def transform1(a: Matrix, i, j, x):
-    if i == j:
-        raise Exception
-
-    for k in range(a.m):
-        a.a[i][k] += a.a[j][k] * x
-
-
-def transform2(a: Matrix, i, j):
-    a.a[i], a.a[j] = a.a[j], a.a[i]
-
-
-def transform3(a: Matrix, i, x):
-    if x == 0:
-        raise Exception
-
-    for j in range(a.m):
-        a.a[i][j] *= x
-
-
-def appendMatrix(a: Matrix, b: Matrix):
+def appendMatrix(a: Matrix, b: Matrix) -> Matrix:
     c = Matrix(a.n, a.m + b.m)
 
     for i in range(a.n):
@@ -37,7 +17,7 @@ def appendMatrix(a: Matrix, b: Matrix):
     return c
 
 
-def splitMatrix(c: Matrix):
+def splitMatrix(c: Matrix) -> (Matrix, Matrix):
     if c.line is None:
         raise Exception
 
@@ -55,7 +35,9 @@ def splitMatrix(c: Matrix):
     return a, b
 
 
-def runGauss(c: Matrix, n: int, m: int):
+def runGauss(c: Matrix, n: int, m: int) -> (Matrix, bool, Fraction):
+    t = transformer.Transformer(c)
+
     row = 0
     for j in range(m):
         if row == n:
@@ -64,14 +46,14 @@ def runGauss(c: Matrix, n: int, m: int):
         if c.get(row, j) == 0:
             for i in range(row + 1, n):
                 if c.get(i, j) != 0:
-                    transform2(c, i, row)
+                    t.transform2(i, row)
                     break
 
         if c.get(row, j) == 0:
             continue
 
         for i in range(row + 1, n):
-            transform1(c, i, row, -Fraction(c.a[i][j], c.a[row][j]))
+            t.transform1(i, row, -Fraction(c.a[i][j], c.a[row][j]))
         row += 1
 
     no_solution = False
@@ -95,20 +77,20 @@ def runGauss(c: Matrix, n: int, m: int):
         for j in range(m):
             if c.get(i, j) != 0:
                 for row in range(0, i):
-                    transform1(c, row, i, -Fraction(c.get(row, j), c.get(i, j)))
-                transform3(c, i, Fraction(1, c.get(i, j)))
+                    t.transform1(row, i, -Fraction(c.get(row, j), c.get(i, j)))
+                t.transform3(i, Fraction(1, c.get(i, j)))
                 break
 
-    return c, no_solution
+    return c, no_solution, t.multiplier
 
 
-def gauss(a: Matrix, b=None, force_print=False):
+def gauss(a: Matrix, b=None, force_print=False) -> None:
     if b is None:
         b = Matrix(a.n, 0)
     elif a.n != b.n:
         raise Exception
 
-    c, no_solution = runGauss(appendMatrix(a, b), a.n, a.m)
+    c, no_solution, _ = runGauss(appendMatrix(a, b), a.n, a.m)
 
     if no_solution and not force_print:
         print("No solution")
@@ -120,7 +102,7 @@ def inv(a: Matrix):
     if a.n != a.m:
         raise Exception
 
-    c, no_solution = runGauss(appendMatrix(a, E(a.n)), a.n, a.m)
+    c, no_solution, _ = runGauss(appendMatrix(a, E(a.n)), a.n, a.m)
 
     if no_solution:
         return None
